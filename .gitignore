@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Dataset and Models
+ai_engine/dataset/
+ai_engine/scripts/Mymodel.h5
+ai_engine/models/
+*.ipynb_checkpoints/
+
+# Server/User Uploads
+server/uploads/
+server/.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build files
+dist/
+build/
