@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   --primary: #2e7d32;
   --primary-light: #4caf50;
@@ -12,225 +14,11 @@
   --border: #e0e0e0;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
 body {
+  @apply bg-[#f1f8e9] text-[#212121] antialiased;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: var(--background);
-  color: var(--text);
-  line-height: 1.6;
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-/* Header */
-header {
-  background-color: var(--surface);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  padding: 1rem 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: var(--primary);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  text-decoration: none;
-}
-
-.nav-links {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-}
-
-.nav-links a {
-  text-decoration: none;
-  color: var(--text);
-  font-weight: 500;
-  transition: color 0.3s;
-}
-
-.nav-links a:hover {
-  color: var(--primary);
-}
-
-.btn {
-  padding: 0.6rem 1.2rem;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s;
-}
-
-.btn-primary {
-  background-color: var(--primary);
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: var(--primary-dark);
-}
-
-.btn-outline {
-  background-color: transparent;
-  border: 2px solid var(--primary);
-  color: var(--primary);
-}
-
-.btn-outline:hover {
-  background-color: var(--primary);
-  color: white;
-}
-
-/* Auth Cards */
-.auth-card {
-  background: var(--surface);
-  padding: 2.5rem;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.05);
-  width: 100%;
-  max-width: 400px;
-  margin: 4rem auto;
-}
-
-.auth-card h2 {
-  margin-bottom: 1.5rem;
-  text-align: center;
-  color: var(--primary-dark);
-}
-
-.form-group {
-  margin-bottom: 1.2rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.4rem;
-  font-weight: 500;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 0.8rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  outline: none;
-}
-
-.form-group input:focus {
-  border-color: var(--primary);
-}
-
-/* Dashboard */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 2rem;
-  margin-top: 2rem;
-}
-
-.card {
-  background: var(--surface);
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-/* Upload Area */
-.upload-zone {
-  border: 2px dashed var(--border);
-  border-radius: 12px;
-  padding: 3rem;
-  text-align: center;
-  cursor: pointer;
-  transition: border-color 0.3s;
-}
-
-.upload-zone:hover {
-  border-color: var(--primary);
-}
-
-/* Results Display */
-.result-box {
-  margin-top: 1.5rem;
-  padding: 1.5rem;
-  border-left: 4px solid var(--primary);
-  background: #f9fdf9;
-}
-
-.remedy-section {
-  margin-top: 1rem;
-}
-
-.remedy-section h4 {
-  color: var(--primary-dark);
-  margin-bottom: 0.5rem;
-}
-
-.remedy-list {
-  list-style: none;
-  padding-left: 0;
-}
-
-.remedy-list li {
-  position: relative;
-  padding-left: 1.2rem;
-  margin-bottom: 0.3rem;
-}
-
-.remedy-list li::before {
-  content: "•";
-  color: var(--primary);
-  position: absolute;
-  left: 0;
-  font-weight: bold;
-}
-
-/* History */
-.history-item {
-  padding: 1rem;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.history-item:last-child {
-  border-bottom: none;
-}
-
-.status-tag {
-  padding: 0.2rem 0.6rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: bold;
-}
-
-.status-high { background: #e8f5e9; color: #2e7d32; }
-.status-med { background: #fff3e0; color: #ef6c00; }
-
-/* Loading Spinner */
 .spinner {
   width: 40px;
   height: 40px;
@@ -246,8 +34,20 @@ nav {
   100% { transform: rotate(360deg); }
 }
 
-@media (max-width: 768px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
+@layer components {
+  .btn {
+    @apply px-5 py-2.5 rounded-lg font-semibold transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-primary {
+    @apply bg-[#2e7d32] text-white hover:bg-[#1b5e20];
+  }
+  
+  .btn-outline {
+    @apply bg-transparent border-2 border-[#2e7d32] text-[#2e7d32] hover:bg-[#2e7d32] hover:text-white;
+  }
+  
+  .card {
+    @apply bg-white rounded-2xl p-6 shadow-sm;
   }
 }

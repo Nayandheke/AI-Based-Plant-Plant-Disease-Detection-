@@ -8,28 +8,29 @@ import './App.css';
 const App = () => {
     return (
         <Router>
-            <div className="App">
-                <nav style={{ background: 'white', padding: '1rem', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', position: 'sticky', top: 0, z_index: 100 }}>
-                    <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Link to="/" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#2e7d32', display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
-                            <Leaf /> KrishiSathi
+            <div className="min-h-screen bg-gray-50">
+                <nav className="bg-white p-4 shadow-sm sticky top-0 z-50">
+                    <div className="container mx-auto flex justify-between items-center max-w-6xl">
+                        <Link to="/" className="text-2xl font-bold text-green-700 flex items-center gap-2 no-underline">
+                            <Leaf className="w-8 h-8" />
+                            <span>KrishiSathi</span>
                         </Link>
-                        <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-                            <Link to="/" style={{ textDecoration: 'none', color: '#212121', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                Home
-                            </Link>
-                            <Link to="/about" style={{ textDecoration: 'none', color: '#212121', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <Info size={18} /> About Us
+                        <div className="flex gap-6 items-center">
+                            <Link to="/about" className="no-underline text-gray-800 font-medium flex items-center gap-1 hover:text-green-700 transition-colors">
+                                <Info size={18} />
+                                <span>About Us</span>
                             </Link>
                         </div>
                     </div>
                 </nav>
 
-                <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="*" element={<Navigate to="/" />} />
-                </Routes>
+                <main className="container mx-auto px-4 py-8">
+                    <Routes>
+                        <Route path="/" element={<Dashboard />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="*" element={<Navigate to="/" />} />
+                    </Routes>
+                </main>
             </div>
         </Router>
     );

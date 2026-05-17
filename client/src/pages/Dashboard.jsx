@@ -1,216 +1,263 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { diseaseService } from '../services/api';
 import { Upload, Leaf, Search, AlertCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
 
 const Dashboard = () => {
+    const [uiState, setUiState] = useState('idle');
     const [selectedFile, setSelectedFile] = useState(null);
-    const [preview, setPreview] = useState(null);
-    const [result, setResult] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const [analysisResult, setAnalysisResult] = useState(null);
+    const [apiError, setApiError] = useState(null);
+    
+    const fileInputRef = useRef(null);
+
+    useEffect(() => {
+        return () => {
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+        };
+    }, [previewUrl]);
 
     const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setSelectedFile(file);
-            setPreview(URL.createObjectURL(file));
-            setResult(null);
-            setError(null);
-        }
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+
+        setSelectedFile(file);
+        setPreviewUrl(URL.createObjectURL(file));
+        setAnalysisResult(null);
+        setApiError(null);
+        setUiState('idle');
     };
 
     const handleAnalyze = async () => {
         if (!selectedFile) return;
 
-        setLoading(true);
-        setError(null);
+        setUiState('loading');
+        setApiError(null);
         
         const formData = new FormData();
         formData.append('image', selectedFile);
 
         try {
             const { data } = await diseaseService.analyze(formData);
-            setResult(data);
+            setAnalysisResult(data);
+            setUiState('success');
         } catch (err) {
-            console.error('Analysis Error:', err);
-            setError({
+            console.error('Analysis failed:', err);
+            setApiError({
                 title: err.response?.data?.error || 'Analysis Failed',
                 message: err.response?.data?.message || 'The system encountered an error while processing the image. Please try again.'
             });
-        } finally {
-            setLoading(false);
+            setUiState('error');
         }
     };
 
     const handleReset = () => {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
         setSelectedFile(null);
-        setPreview(null);
-        setResult(null);
-        setError(null);
+        setPreviewUrl(null);
+        setAnalysisResult(null);
+        setApiError(null);
+        setUiState('idle');
+    };
+
+    const triggerFileBrowser = () => {
+        fileInputRef.current?.click();
     };
 
     return (
-        <div className="container" style={{ padding: '2rem 1rem', maxWidth: '1000px', margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-                <h1 style={{ color: '#1b5e20', fontSize: '2.5rem', marginBottom: '0.5rem' }}>🌱 KrishiSathi AI</h1>
-                <p style={{ color: '#666', fontSize: '1.1rem' }}>Instant Plant Disease Diagnosis & Treatment Remedies</p>
+        <div className="max-w-5xl mx-auto space-y-12">
+            <div className="text-center space-y-2">
+                <h1 className="text-4xl font-extrabold text-green-900 tracking-tight">🌱 KrishiSathi AI</h1>
+                <p className="text-lg text-gray-600">Instant Plant Disease Diagnosis & Treatment Remedies</p>
             </div>
             
-            <div className="card" style={{ padding: '2rem' }}>
-                {!result && !error && (
-                    <div style={{ textAlign: 'center' }}>
-                        <div 
-                            className="upload-zone" 
-                            onClick={() => !loading && document.getElementById('fileInput').click()}
-                            style={{
-                                border: '3px dashed #c8e6c9',
-                                borderRadius: '20px',
-                                padding: '3rem 2rem',
-                                cursor: loading ? 'not-allowed' : 'pointer',
-                                transition: 'all 0.3s ease',
-                                background: preview ? '#f8fdf8' : '#fafafa',
-                                minHeight: '300px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'center',
-                                alignItems: 'center'
-                            }}
-                        >
-                            {preview ? (
-                                <img src={preview} alt="Preview" style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
-                            ) : (
-                                <>
-                                    <div style={{ background: '#e8f5e9', padding: '1.5rem', borderRadius: '50%', marginBottom: '1.5rem' }}>
-                                        <Upload size={48} color="#2e7d32" />
-                                    </div>
-                                    <h3 style={{ color: '#2e7d32', marginBottom: '0.5rem' }}>Upload Leaf Image</h3>
-                                    <p style={{ color: '#757575' }}>Drag and drop or click to browse files</p>
-                                    <p style={{ color: '#9e9e9e', fontSize: '0.85rem', marginTop: '1rem' }}>Supports JPG, PNG, WEBP (Max 5MB)</p>
-                                </>
-                            )}
-                            <input type="file" id="fileInput" hidden onChange={handleFileChange} accept="image/*" />
-                        </div>
-
-                        {selectedFile && !loading && (
-                            <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                                <button onClick={handleReset} className="btn btn-outline" style={{ height: '50px', padding: '0 2rem' }}>
-                                    Change Image
-                                </button>
-                                <button onClick={handleAnalyze} className="btn btn-primary" style={{ height: '50px', padding: '0 3rem', fontSize: '1.1rem', fontWeight: 'bold' }}>
-                                    <Search size={20} style={{ marginRight: '8px' }} /> Start Analysis
-                                </button>
-                            </div>
-                        )}
-
-                        {loading && (
-                            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-                                <div className="spinner" style={{ margin: '0 auto 1.5rem' }}></div>
-                                <h3 style={{ color: '#2e7d32' }}>AI is Analyzing...</h3>
-                                <p style={{ color: '#757575' }}>Identifying plant species and disease patterns</p>
-                            </div>
-                        )}
-                    </div>
+            <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+                {uiState === 'error' && (
+                    <ErrorStage error={apiError} onReset={handleReset} />
                 )}
+                
+                {uiState === 'success' && (
+                    <ResultStage result={analysisResult} preview={previewUrl} onReset={handleReset} />
+                )}
+                
+                {(uiState === 'idle' || uiState === 'loading') && (
+                    <UploadStage 
+                        preview={previewUrl}
+                        loading={uiState === 'loading'}
+                        hasFile={!!selectedFile}
+                        fileInputRef={fileInputRef}
+                        onUploadClick={triggerFileBrowser}
+                        onFileChange={handleFileChange}
+                        onReset={handleReset}
+                        onAnalyze={handleAnalyze}
+                    />
+                )}
+            </div>
+            
+            <footer className="text-center pb-8 text-gray-400 text-sm font-medium">
+                <p>© 2026 KrishiSathi AI • Intelligent Agricultural Assistant</p>
+            </footer>
+        </div>
+    );
+};
 
-                {error && (
-                    <div style={{ textAlign: 'center', padding: '2rem' }}>
-                        <div style={{ color: '#c62828', marginBottom: '1.5rem' }}>
-                            <AlertCircle size={64} style={{ margin: '0 auto' }} />
+const UploadStage = ({ preview, loading, hasFile, fileInputRef, onUploadClick, onFileChange, onReset, onAnalyze }) => (
+    <div className="p-8 md:p-12 text-center">
+        <div 
+            className={`border-4 border-dashed rounded-3xl p-10 transition-all duration-300 flex flex-col items-center justify-center min-h-[350px]
+                ${loading ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:border-green-400 hover:bg-green-50'}
+                ${preview ? 'border-green-200 bg-green-50/30' : 'border-gray-200 bg-gray-50'}`}
+            onClick={() => !loading && onUploadClick()}
+        >
+            {preview ? (
+                <img src={preview} alt="Preview" className="max-w-full max-h-[450px] rounded-2xl shadow-2xl border-4 border-white" />
+            ) : (
+                <>
+                    <div className="bg-green-100 p-6 rounded-full mb-6">
+                        <Upload className="w-12 h-12 text-green-700" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-green-800 mb-2">Upload Leaf Image</h3>
+                    <p className="text-gray-500 mb-4">Drag and drop or click to browse files</p>
+                    <p className="text-xs text-gray-400">Supports JPG, PNG, WEBP (Max 5MB)</p>
+                </>
+            )}
+            <input type="file" ref={fileInputRef} className="hidden" onChange={onFileChange} accept="image/*" />
+        </div>
+
+        {hasFile && !loading && (
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+                <button onClick={onReset} className="btn btn-outline py-4 px-8 text-lg">
+                    Change Image
+                </button>
+                <button onClick={onAnalyze} className="btn btn-primary py-4 px-10 text-lg flex items-center justify-center gap-2">
+                    <Search className="w-6 h-6" />
+                    <span>Start Analysis</span>
+                </button>
+            </div>
+        )}
+
+        {loading && (
+            <div className="mt-8 space-y-4">
+                <div className="spinner w-16 h-16 border-t-green-600"></div>
+                <div className="space-y-1">
+                    <h3 className="text-xl font-bold text-green-800">AI is Analyzing...</h3>
+                    <p className="text-gray-500">Identifying plant species and disease patterns</p>
+                </div>
+            </div>
+        )}
+    </div>
+);
+
+const ErrorStage = ({ error, onReset }) => (
+    <div className="p-12 text-center space-y-6">
+        <div className="text-red-600">
+            <AlertCircle className="w-20 h-20 mx-auto" />
+        </div>
+        <div className="space-y-2">
+            <h2 className="text-3xl font-bold text-red-700">{error?.title}</h2>
+            <p className="text-gray-600 text-lg max-w-lg mx-auto leading-relaxed">
+                {error?.message}
+            </p>
+        </div>
+        <button onClick={onReset} className="btn btn-primary py-4 px-10 flex items-center gap-2 mx-auto">
+            <RefreshCw className="w-5 h-5" />
+            <span>Try Again</span>
+        </button>
+    </div>
+);
+
+const ResultStage = ({ result, preview, onReset }) => {
+    if (!result) return null;
+    
+    return (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="p-8 md:p-10">
+                <div className="grid md:grid-cols-5 gap-10 items-start">
+                    <div className="md:col-span-2 space-y-6">
+                        <div className="relative group">
+                            <img src={preview} alt="Analyzed leaf" className="w-full rounded-3xl shadow-2xl border-4 border-white object-cover aspect-square" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl flex items-center justify-center">
+                                <button onClick={onReset} className="bg-white text-green-800 p-4 rounded-full shadow-lg hover:scale-110 transition-transform">
+                                    <RefreshCw className="w-8 h-8" />
+                                </button>
+                            </div>
                         </div>
-                        <h2 style={{ color: '#c62828', marginBottom: '1rem' }}>{error.title}</h2>
-                        <p style={{ color: '#555', fontSize: '1.1rem', maxWidth: '500px', margin: '0 auto 2rem', lineHeight: '1.6' }}>
-                            {error.message}
-                        </p>
-                        <button onClick={handleReset} className="btn btn-primary" style={{ padding: '0.8rem 2.5rem' }}>
-                            <RefreshCw size={18} style={{ marginRight: '8px' }} /> Try Again
+                        <button onClick={onReset} className="btn btn-outline w-full py-4 flex items-center justify-center gap-2">
+                            <RefreshCw className="w-5 h-5" />
+                            <span>Analyze Another Leaf</span>
                         </button>
                     </div>
-                )}
-
-                {result && (
-                    <div className="result-container animate-fade-in">
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '3rem', alignItems: 'start' }}>
-                            <div className="result-image-box">
-                                <img src={preview} alt="Analyzed leaf" style={{ width: '100%', borderRadius: '20px', boxShadow: '0 8px 30px rgba(0,0,0,0.15)', border: '4px solid white' }} />
-                                <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-                                    <button onClick={handleReset} className="btn btn-outline" style={{ width: '100%' }}>
-                                        <RefreshCw size={18} style={{ marginRight: '8px' }} /> Analyze Another Leaf
-                                    </button>
-                                </div>
+                    
+                    <div className="md:col-span-3 space-y-8">
+                        <div className="bg-green-50 p-8 rounded-[2rem] border border-green-100 space-y-6">
+                            <div className="flex items-center gap-3 text-green-700">
+                                <CheckCircle2 className="w-8 h-8" />
+                                <span className="font-bold uppercase tracking-widest text-sm">Diagnosis Complete</span>
                             </div>
+                            <h2 className="text-4xl font-black text-green-900 leading-tight">
+                                {result.disease}
+                            </h2>
                             
-                            <div className="result-details">
-                                <div style={{ background: '#f1f8e9', padding: '2rem', borderRadius: '24px', border: '1px solid #c8e6c9', marginBottom: '2rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#2e7d32', marginBottom: '1rem' }}>
-                                        <CheckCircle2 size={24} />
-                                        <span style={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Diagnosis Complete</span>
-                                    </div>
-                                    <h2 style={{ color: '#1b5e20', fontSize: '2rem', marginBottom: '1.5rem', lineHeight: '1.2' }}>
-                                        {result.disease}
-                                    </h2>
-                                    
-                                    <div style={{ background: 'white', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', alignItems: 'center' }}>
-                                            <span style={{ fontWeight: 600, color: '#666' }}>AI Confidence Score</span>
-                                            <span style={{ fontWeight: 800, color: '#2e7d32', fontSize: '1.2rem' }}>{result.confidence.toFixed(1)}%</span>
-                                        </div>
-                                        <div style={{ height: '14px', background: '#f5f5f5', borderRadius: '7px', overflow: 'hidden' }}>
-                                            <div style={{ 
-                                                height: '100%', 
-                                                width: `${result.confidence}%`, 
-                                                background: 'linear-gradient(90deg, #4caf50, #2e7d32)',
-                                                borderRadius: '7px',
-                                                transition: 'width 1.5s cubic-bezier(0.4, 0, 0.2, 1)'
-                                            }}></div>
-                                        </div>
-                                    </div>
+                            <div className="bg-white p-6 rounded-2xl shadow-sm space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <span className="font-semibold text-gray-500 uppercase text-xs tracking-wider">AI Confidence Score</span>
+                                    <span className="font-black text-green-700 text-2xl">{result.confidence?.toFixed(1)}%</span>
                                 </div>
-
-                                <div style={{ padding: '0 0.5rem' }}>
-                                    <h3 style={{ color: '#1b5e20', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <Leaf size={20} /> About this condition
-                                    </h3>
-                                    <p style={{ color: '#444', fontSize: '1.05rem', lineHeight: '1.7', marginBottom: '2rem' }}>
-                                        {result.remedy.description}
-                                    </p>
+                                <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
+                                    <div 
+                                        className="h-full bg-gradient-to-r from-green-500 to-green-800 rounded-full transition-all duration-1000 ease-out"
+                                        style={{ width: `${result.confidence}%` }}
+                                    ></div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="remedy-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '1rem' }}>
-                            <div style={{ background: 'white', border: '1px solid #c8e6c9', borderRadius: '20px', padding: '2rem', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-                                <h4 style={{ color: '#2e7d32', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.2rem' }}>
-                                    <span style={{ background: '#e8f5e9', padding: '8px', borderRadius: '10px' }}>🌿</span> Organic Control
-                                </h4>
-                                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                                    {result.remedy.organic.map((item, i) => (
-                                        <li key={i} style={{ marginBottom: '1rem', paddingLeft: '1.5rem', position: 'relative', color: '#555', lineHeight: '1.5' }}>
-                                            <span style={{ position: 'absolute', left: 0, color: '#4caf50' }}>•</span> {item}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                            
-                            <div style={{ background: 'white', border: '1px solid #ffccbc', borderRadius: '20px', padding: '2rem', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-                                <h4 style={{ color: '#d84315', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.2rem' }}>
-                                    <span style={{ background: '#fff3e0', padding: '8px', borderRadius: '10px' }}>🧪</span> Chemical Control
-                                </h4>
-                                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                                    {result.remedy.chemical.map((item, i) => (
-                                        <li key={i} style={{ marginBottom: '1rem', paddingLeft: '1.5rem', position: 'relative', color: '#555', lineHeight: '1.5' }}>
-                                            <span style={{ position: 'absolute', left: 0, color: '#ff7043' }}>•</span> {item}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
+                        <div className="px-2 space-y-4">
+                            <h3 className="text-2xl font-bold text-green-900 flex items-center gap-3">
+                                <Leaf className="w-6 h-6" />
+                                <span>About this condition</span>
+                            </h3>
+                            <p className="text-gray-700 text-lg leading-relaxed">
+                                {result.remedy?.description}
+                            </p>
                         </div>
                     </div>
-                )}
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-8 mt-12">
+                    <div className="bg-white border border-green-100 rounded-3xl p-8 shadow-sm hover:shadow-md transition-shadow">
+                        <h4 className="text-xl font-bold text-green-800 mb-6 flex items-center gap-3">
+                            <span className="bg-green-100 p-3 rounded-2xl">🌿</span>
+                            <span>Organic Control</span>
+                        </h4>
+                        <ul className="space-y-4">
+                            {result.remedy?.organic?.map((item, i) => (
+                                <li key={i} className="flex gap-3 text-gray-700 leading-relaxed">
+                                    <span className="text-green-500 font-bold">•</span>
+                                    <span>{item}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                    
+                    <div className="bg-white border border-orange-100 rounded-3xl p-8 shadow-sm hover:shadow-md transition-shadow">
+                        <h4 className="text-xl font-bold text-orange-800 mb-6 flex items-center gap-3">
+                            <span className="bg-orange-50 p-3 rounded-2xl">🧪</span>
+                            <span>Chemical Control</span>
+                        </h4>
+                        <ul className="space-y-4">
+                            {result.remedy?.chemical?.map((item, i) => (
+                                <li key={i} className="flex gap-3 text-gray-700 leading-relaxed">
+                                    <span className="text-orange-500 font-bold">•</span>
+                                    <span>{item}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
             </div>
-            
-            <footer style={{ textAlign: 'center', marginTop: '4rem', color: '#9e9e9e', fontSize: '0.9rem' }}>
-                <p>© 2026 KrishiSathi AI. Trained on 38 disease classes.</p>
-            </footer>
         </div>
     );
 };
