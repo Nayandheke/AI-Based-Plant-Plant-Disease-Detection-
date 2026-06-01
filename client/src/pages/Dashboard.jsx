@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { diseaseService } from '../services/api';
-import { Upload, Leaf, Search, AlertCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Upload, Leaf, Search, AlertCircle, RefreshCw, CheckCircle2, ShieldCheck } from 'lucide-react';
 
 const Dashboard = () => {
     const [uiState, setUiState] = useState('idle');
@@ -69,7 +69,7 @@ const Dashboard = () => {
     return (
         <div className="max-w-5xl mx-auto space-y-12">
             <div className="text-center space-y-2">
-                <h1 className="text-4xl font-extrabold text-green-900 tracking-tight">🌱 KrishiSathi AI</h1>
+                <h1 className="text-4xl font-extrabold text-green-900 tracking-tight">KrishiSathi AI</h1>
                 <p className="text-lg text-gray-600">Instant Plant Disease Diagnosis & Treatment Remedies</p>
             </div>
             
@@ -96,9 +96,6 @@ const Dashboard = () => {
                 )}
             </div>
             
-            <footer className="text-center pb-8 text-gray-400 text-sm font-medium">
-                <p>© 2026 KrishiSathi AI • Intelligent Agricultural Assistant</p>
-            </footer>
         </div>
     );
 };
@@ -229,7 +226,9 @@ const ResultStage = ({ result, preview, onReset }) => {
                 <div className="grid md:grid-cols-2 gap-8 mt-12">
                     <div className="bg-white border border-green-100 rounded-3xl p-8 shadow-sm hover:shadow-md transition-shadow">
                         <h4 className="text-xl font-bold text-green-800 mb-6 flex items-center gap-3">
-                            <span className="bg-green-100 p-3 rounded-2xl">🌿</span>
+                            <span className="bg-green-100 p-3 rounded-2xl">
+                                <Leaf className="w-6 h-6" />
+                            </span>
                             <span>Organic Control</span>
                         </h4>
                         <ul className="space-y-4">
@@ -244,7 +243,9 @@ const ResultStage = ({ result, preview, onReset }) => {
                     
                     <div className="bg-white border border-orange-100 rounded-3xl p-8 shadow-sm hover:shadow-md transition-shadow">
                         <h4 className="text-xl font-bold text-orange-800 mb-6 flex items-center gap-3">
-                            <span className="bg-orange-50 p-3 rounded-2xl">🧪</span>
+                            <span className="bg-orange-50 p-3 rounded-2xl">
+                                <ShieldCheck className="w-6 h-6" />
+                            </span>
                             <span>Chemical Control</span>
                         </h4>
                         <ul className="space-y-4">

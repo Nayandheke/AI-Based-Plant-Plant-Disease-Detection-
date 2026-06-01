@@ -7,7 +7,7 @@ import './App.css';
 
 const App = () => {
     return (
-        <Router>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <div className="min-h-screen bg-gray-50">
                 <nav className="bg-white p-4 shadow-sm sticky top-0 z-50">
                     <div className="container mx-auto flex justify-between items-center max-w-6xl">

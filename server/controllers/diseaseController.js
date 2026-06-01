@@ -1,7 +1,6 @@
 const axios = require('axios');
 const fs = require('fs');
 const FormData = require('form-data');
-const Prediction = require('../models/Prediction');
 const remedies = require('../utils/remedies.json');
 
 /**
@@ -45,15 +44,6 @@ const analyzeLeaf = async (req, res) => {
             chemical: ["Consult a local agricultural expert for verified treatments."]
         };
 
-        // Save to Database (Optional)
-        const prediction = new Prediction({
-            diseaseClass: cleanName,
-            confidence: confidence,
-            imagePath: req.file.path,
-            remedy: remedy
-        });
-        await prediction.save();
-
         // Final Response
         return res.json({
             disease: cleanName,
@@ -68,15 +58,10 @@ const analyzeLeaf = async (req, res) => {
 };
 
 /**
- * Get recent activity (unused in current simplified UI but kept for API)
+ * Get recent activity (Database removed)
  */
 const getHistory = async (req, res) => {
-    try {
-        const history = await Prediction.find().sort({ createdAt: -1 }).limit(10);
-        res.json(history);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+    return res.json({ message: "History feature is disabled in this version." });
 };
 
 module.exports = { analyzeLeaf, getHistory };

@@ -4,6 +4,7 @@ import numpy as np
 import json
 import os
 from PIL import Image
+import cv2
 
 # --- 1. SETUP ---
 st.set_page_config(page_title="KrishiSathi AI Portal", layout="centered", page_icon="🌱")
@@ -44,13 +45,39 @@ try:
 except Exception as e:
     st.error(f"Critical Error Loading Model: {e}")
 
-# --- 2. PREPROCESSING ---
+# --- 2. CORE LOGIC ---
 def preprocess_image(image: Image.Image):
     if image.mode != 'RGB':
         image = image.convert('RGB')
     image = image.resize((224, 224))
     img_array = np.array(image) / 255.0
     return np.expand_dims(img_array, axis=0)
+
+def verify_leaf(image: Image.Image) -> tuple[bool, str]:
+    """Uses Computer Vision to verify if the image is likely a leaf."""
+    img_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+    
+    # 1. Color Check
+    hsv = cv2.cvtColor(img_cv, cv2.COLOR_BGR2HSV)
+    lower_green = np.array([30, 20, 20])
+    upper_green = np.array([90, 255, 255])
+    lower_brown = np.array([10, 20, 20])
+    upper_brown = np.array([30, 255, 255])
+    
+    mask_g = cv2.inRange(hsv, lower_green, upper_green)
+    mask_b = cv2.inRange(hsv, lower_brown, upper_brown)
+    leaf_ratio = cv2.countNonZero(cv2.bitwise_or(mask_g, mask_b)) / (img_cv.shape[0] * img_cv.shape[1])
+    
+    # 2. Texture Check
+    gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
+    laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
+    
+    if leaf_ratio < 0.15:
+        return False, "Low leaf-color density detected. This doesn't look like a plant leaf."
+    if laplacian_var < 10:
+        return False, "Image lacks natural texture (likely a digital screenshot)."
+    
+    return True, "Leaf verified"
 
 # --- 3. UI ---
 st.title("🌱 KrishiSathi: AI Disease Portal")
@@ -67,7 +94,10 @@ if uploaded_file is not None:
             st.error("AI Model not loaded. Please check logs and refresh.")
         else:
             with st.spinner("Analyzing plant patterns..."):
-                # Predict
+                # 1. CV Verification
+                is_leaf, reason = verify_leaf(image)
+                
+                # 2. AI Prediction
                 processed_data = preprocess_image(image)
                 preds = model.predict(processed_data, verbose=0)
             
@@ -75,19 +105,24 @@ if uploaded_file is not None:
             confidence = float(preds[0][idx])
             result = labels[idx].replace('___', ' ').replace('_', ' ')
 
-            # --- GATEKEEPER ---
-            THRESHOLD = 0.70
+            # Final Decision Logic
+            GATEKEEPER_THRESHOLD = 0.70
             
-            if confidence >= THRESHOLD:
+            if not is_leaf:
+                st.error(f"🚨 **Non-Leaf Image Detected**")
+                st.warning(reason)
+            elif confidence < 0.40:
+                st.error("🚨 **Unrecognized Patterns**")
+                st.info("The AI could not identify any known disease patterns in this leaf.")
+            elif confidence < GATEKEEPER_THRESHOLD:
+                st.error("🚨 **Low Confidence**")
+                st.warning("The AI is not certain about this diagnosis. Please upload a clearer image.")
+            else:
                 st.success(f"### Diagnosis: {result}")
                 st.progress(confidence)
                 st.write(f"**Confidence Level:** {confidence*100:.1f}%")
-                
-                st.info("💡 **Next Steps:** Check the main dashboard for detailed remedies and treatment plans.")
-            else:
-                st.error("🚨 **Non-Leaf Image Detected**")
-                st.warning("The system is not confident that this is a supported leaf image.")
-                st.info("Tips:\n1. Ensure the leaf is the main subject.\n2. Use good lighting.\n3. Make sure the plant is in our 38 supported classes.")
+                st.info("💡 **Next Steps:** Check the main dashboard for detailed remedies.")
 
 st.markdown("---")
-st.caption("KrishiSathi AI System v1.1.0 | Standardized Preprocessing Enabled")
+st.caption("KrishiSathi AI System v1.1.1 | Advanced Leaf Verification Enabled")
+
