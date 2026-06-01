@@ -12,7 +12,6 @@ A full-stack web application for plant disease detection using leaf images.
 ### 1. Prerequisites
 - Node.js (v18+)
 - Python (3.9+)
-- MongoDB (Running on `localhost:27017`)
 
 ### 2. AI Engine (Python)
 ```bash
